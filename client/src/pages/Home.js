@@ -136,18 +136,18 @@ function Home() {
     ];
 
     return (
-        <div className="page-stack fade-in">
+        <div className="page-stack fade-in home-page">
             <section className="hero">
                 <div className="hero-grid">
                     <div className="hero-content">
-                        <div className="hero-badge">
+                        <div className="hero-badge hero-badge-strong">
                             <MapIcon />
-                            <span>Business-ready public court booking</span>
+                            <span>Operational public-court command layer</span>
                         </div>
-                        <h1 className="hero-title">A cleaner way to run public tennis court reservations in Milpitas.</h1>
+                        <h1 className="hero-title">A sharper, faster reservation experience for public tennis courts in Milpitas.</h1>
                         <p className="hero-copy">
-                            TennisBook packages live court availability, queue management, map-based discovery, and QR reservations
-                            into a polished interface that feels closer to an operations dashboard than a hobby project.
+                            TennisBook now reads like a true booking product: real-time court discovery, map intelligence,
+                            scheduled play windows, passcode-protected cancellation, and demand signals that stay readable under pressure.
                         </p>
                         <div className="hero-actions">
                             <Link to="/courts" className="btn btn-lg btn-primary">
@@ -159,15 +159,29 @@ function Home() {
                                 Review Reservations
                             </Link>
                         </div>
+                        <div className="hero-strip">
+                            <div className="hero-strip-item">
+                                <span>Signal</span>
+                                <strong>Live availability + future occupancy</strong>
+                            </div>
+                            <div className="hero-strip-item">
+                                <span>Flow</span>
+                                <strong>Book, queue, cancel, and check in from one place</strong>
+                            </div>
+                            <div className="hero-strip-item">
+                                <span>Design</span>
+                                <strong>Upgraded UI with stronger hierarchy and scheduling clarity</strong>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="hero-panel">
+                    <div className="hero-panel hero-panel-spotlight">
                         <div className="hero-panel-header">
                             <span className="section-kicker">Operational Snapshot</span>
-                            <h2>Live capacity across the Milpitas network</h2>
+                            <h2>Network readiness at a glance</h2>
                         </div>
 
-                        <div className="hero-kpi-grid">
+                        <div className="hero-kpi-grid hero-kpi-grid-strong">
                             <div className="hero-kpi">
                                 <span>Total Courts</span>
                                 <strong>{loading ? '...' : stats.totalCourts}</strong>
@@ -186,7 +200,7 @@ function Home() {
                             </div>
                         </div>
 
-                        <div className="hero-list">
+                        <div className="hero-list hero-signal-list">
                             <div className="hero-list-item">
                                 <CheckIcon />
                                 <span>Free public venues only</span>
@@ -197,21 +211,26 @@ function Home() {
                             </div>
                             <div className="hero-list-item">
                                 <ClockIcon />
-                                <span>Built for fast same-day booking</span>
+                                <span>Built for same-day and future scheduling</span>
+                            </div>
+                            <div className="hero-callout">
+                                <span>Current mode</span>
+                                <strong>Editorial sports dashboard</strong>
+                                <p>Less demo-site, more polished booking control room.</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section className="section-block">
+            <section className="section-block home-section home-section-core">
                 <div className="section-header">
                     <div>
                         <span className="section-kicker">Core Platform</span>
-                        <h2 className="section-title">Designed to feel modern, credible, and operationally clear</h2>
+                        <h2 className="section-title">Refactored to feel deliberate, premium, and easier to scan under load</h2>
                     </div>
                     <p className="section-copy">
-                        The interface is structured to support day-to-day public court management, not just one-off browsing.
+                        Every major interaction now pushes clearer hierarchy, stronger spacing, and more confident product framing.
                     </p>
                 </div>
 
@@ -226,11 +245,11 @@ function Home() {
                 </div>
             </section>
 
-            <section className="section-block">
+            <section className="section-block home-section home-section-process">
                 <div className="section-header">
                     <div>
                         <span className="section-kicker">Workflow</span>
-                        <h2 className="section-title">Three steps from discovery to check-in</h2>
+                        <h2 className="section-title">Three moves from availability scan to confirmed play window</h2>
                     </div>
                     <Link to="/map" className="section-link">
                         Open the map

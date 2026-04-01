@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');
 
 :root {
     --bg: #f1ece2;
@@ -2729,5 +2729,1169 @@ select {
 
     .calendar-day-meta {
         font-size: 0.62rem;
+    }
+}
+
+/* 2026 UI refactor */
+:root {
+    --bg: #f1ece2;
+    --bg-strong: #e8decd;
+    --surface: rgba(255, 252, 247, 0.94);
+    --surface-solid: #fffdf8;
+    --surface-soft: #f7f1e7;
+    --surface-tint: rgba(11, 82, 69, 0.09);
+    --border: rgba(13, 32, 29, 0.12);
+    --border-strong: rgba(13, 32, 29, 0.18);
+    --ink: #10211d;
+    --ink-soft: #2f4a43;
+    --muted: #65736d;
+    --primary: #0b5245;
+    --primary-dark: #072f29;
+    --primary-soft: #d7ece5;
+    --accent: #c07d2d;
+    --accent-soft: #f6e0c3;
+    --success: #227351;
+    --success-soft: #ddf1e6;
+    --warning: #b97726;
+    --warning-soft: #fbebd4;
+    --danger: #b35858;
+    --danger-soft: #f6dddd;
+    --shadow-sm: 0 18px 38px rgba(18, 32, 28, 0.08);
+    --shadow-md: 0 28px 62px rgba(18, 32, 28, 0.12);
+    --shadow-lg: 0 42px 92px rgba(18, 32, 28, 0.18);
+}
+
+body {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    background:
+        radial-gradient(circle at top left, rgba(11, 82, 69, 0.16), transparent 24%),
+        radial-gradient(circle at top right, rgba(192, 125, 45, 0.12), transparent 18%),
+        radial-gradient(circle at bottom left, rgba(11, 82, 69, 0.07), transparent 26%),
+        linear-gradient(180deg, #faf6ef 0%, #efe7da 100%);
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+        linear-gradient(rgba(17, 25, 35, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(17, 25, 35, 0.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.35), transparent 82%);
+}
+
+.app::before {
+    top: 120px;
+    right: -120px;
+    width: 520px;
+    height: 520px;
+    background: radial-gradient(circle, rgba(11, 82, 69, 0.12), transparent 68%);
+}
+
+.app::after {
+    left: -110px;
+    bottom: 40px;
+    width: 520px;
+    height: 520px;
+    background: radial-gradient(circle, rgba(192, 125, 45, 0.12), transparent 72%);
+}
+
+.global-watermark {
+    top: 54vh;
+    opacity: 0.075;
+    mix-blend-mode: multiply;
+}
+
+.global-watermark-track {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    color: rgba(7, 47, 41, 0.66);
+}
+
+.navbar {
+    padding-top: 1.3rem;
+}
+
+.navbar-container {
+    max-width: 1360px;
+    padding: 0.95rem 1.1rem;
+    border-radius: 30px;
+    background:
+        linear-gradient(135deg, rgba(11, 47, 41, 0.96), rgba(14, 77, 65, 0.9)),
+        rgba(11, 47, 41, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 28px 48px rgba(11, 47, 41, 0.2);
+}
+
+.navbar-brand,
+.nav-link,
+.footer-links a {
+    transition: transform var(--transition), color var(--transition), background var(--transition), border-color var(--transition);
+}
+
+.brand-mark {
+    width: 56px;
+    height: 56px;
+    border-radius: 20px;
+    background:
+        radial-gradient(circle at 24% 22%, rgba(255, 255, 255, 0.22), transparent 36%),
+        linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #f7f5ef;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 16px 28px rgba(11, 82, 69, 0.24);
+}
+
+.brand-copy strong,
+.brand-copy span,
+.navbar-tag,
+.navbar-status,
+.navbar-mini-card,
+.nav-link {
+    color: #edf3fb;
+}
+
+.brand-copy strong {
+    font-size: 1.06rem;
+}
+
+.brand-copy span,
+.navbar-tag,
+.navbar-status,
+.navbar-mini-card span {
+    color: rgba(237, 243, 251, 0.68);
+}
+
+.navbar-tag,
+.navbar-status,
+.navbar-mini-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.navbar-links {
+    padding: 0.3rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+.nav-link {
+    border-radius: 16px;
+    font-size: 0.9rem;
+}
+
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff8ef;
+}
+
+.nav-link.active {
+    background: linear-gradient(145deg, rgba(11, 82, 69, 0.9), rgba(20, 108, 89, 0.9));
+    color: #fff8ef;
+    box-shadow: 0 10px 24px rgba(11, 82, 69, 0.22);
+}
+
+.status-dot {
+    background: #7cffba;
+    box-shadow: 0 0 0 6px rgba(124, 255, 186, 0.13);
+}
+
+.navbar-utility {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+
+.navbar-mini-card {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.08rem;
+    padding: 0.58rem 0.86rem;
+    border-radius: 18px;
+    min-width: 118px;
+}
+
+.navbar-mini-card strong {
+    color: #fff8ef;
+    font-size: 0.88rem;
+    letter-spacing: -0.02em;
+}
+
+.main-content {
+    max-width: 1360px;
+    padding-top: 2.2rem;
+}
+
+.page-stack {
+    gap: 1.4rem;
+}
+
+.app-footer {
+    max-width: 1360px;
+    display: grid;
+    grid-template-columns: 1.15fr 0.8fr 0.9fr;
+    align-items: start;
+    gap: 1.4rem;
+    padding-top: 1.8rem;
+    color: var(--ink-soft);
+    border-top-color: rgba(19, 25, 35, 0.08);
+}
+
+.footer-brand strong {
+    display: block;
+    font-family: 'Fraunces', serif;
+    font-size: 1.5rem;
+    letter-spacing: -0.04em;
+}
+
+.footer-brand p {
+    margin-top: 0.5rem;
+    max-width: 34ch;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+}
+
+.footer-links a,
+.footer-meta span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0.56rem 0.82rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.54);
+    border: 1px solid rgba(19, 25, 35, 0.08);
+    text-decoration: none;
+    color: var(--ink-soft);
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
+.footer-links a:hover {
+    transform: translateY(-1px);
+    background: rgba(21, 82, 70, 0.08);
+    color: var(--primary-dark);
+}
+
+.footer-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    align-items: flex-start;
+}
+
+.section-block,
+.section-intro,
+.legend-card,
+.selected-court-panel,
+.map-panel,
+.reservation-card,
+.court-card,
+.stat-card,
+.feature-card,
+.process-card {
+    border-radius: 34px;
+    border-color: rgba(19, 25, 35, 0.08);
+    box-shadow: var(--shadow-sm);
+}
+
+.section-intro {
+    min-height: 260px;
+    background:
+        linear-gradient(140deg, rgba(255, 252, 247, 0.96), rgba(241, 235, 225, 0.9)),
+        radial-gradient(circle at 85% 15%, rgba(192, 125, 45, 0.14), transparent 22%),
+        radial-gradient(circle at 10% 0%, rgba(11, 82, 69, 0.12), transparent 28%);
+}
+
+.section-intro::before {
+    content: '';
+    position: absolute;
+    inset: auto 1.5rem 1.5rem auto;
+    width: 160px;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+}
+
+.section-kicker {
+    background: rgba(21, 82, 70, 0.1);
+    color: var(--primary);
+}
+
+.hero {
+    padding: 3rem;
+    border-radius: 42px;
+    background:
+        radial-gradient(circle at 20% 12%, rgba(255, 255, 255, 0.12), transparent 18%),
+        linear-gradient(132deg, #11342f 0%, #0f5d4e 46%, #1d7560 100%);
+}
+
+.hero::after {
+    left: auto;
+    right: -5%;
+    bottom: -12%;
+    width: 480px;
+    height: 240px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.16), transparent);
+}
+
+.hero-grid {
+    grid-template-columns: minmax(0, 1.18fr) minmax(360px, 0.9fr);
+    gap: 1.5rem;
+}
+
+.hero-badge-strong {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff8ef;
+    border-color: rgba(255, 255, 255, 0.16);
+}
+
+.hero-title {
+    max-width: 10.6ch;
+    font-size: clamp(3.05rem, 5.4vw, 5.25rem);
+}
+
+.hero-copy {
+    max-width: 60ch;
+    font-size: 1.02rem;
+}
+
+.hero-strip {
+    margin-top: 2rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.8rem;
+}
+
+.hero-strip-item {
+    padding: 1rem 1.05rem;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hero-strip-item span {
+    display: block;
+    color: rgba(255, 248, 239, 0.6);
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.hero-strip-item strong {
+    display: block;
+    margin-top: 0.45rem;
+    color: #fff8ef;
+    font-size: 0.96rem;
+    line-height: 1.35;
+}
+
+.hero-panel-spotlight {
+    padding: 1.7rem;
+    border-radius: 32px;
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06)),
+        linear-gradient(160deg, rgba(19, 28, 41, 0.42), rgba(255, 255, 255, 0));
+}
+
+.hero-kpi-grid-strong .hero-kpi {
+    min-height: 118px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(14px);
+}
+
+.hero-kpi strong {
+    letter-spacing: -0.05em;
+}
+
+.hero-signal-list {
+    gap: 0.75rem;
+}
+
+.hero-callout {
+    padding: 1rem 1.05rem;
+    border-radius: 22px;
+    background: linear-gradient(140deg, rgba(11, 82, 69, 0.16), rgba(255, 255, 255, 0.08));
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.hero-callout span {
+    display: block;
+    color: rgba(255, 248, 239, 0.62);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.hero-callout strong {
+    display: block;
+    margin-top: 0.4rem;
+    color: #fff8ef;
+    font-size: 1.12rem;
+    letter-spacing: -0.03em;
+}
+
+.hero-callout p {
+    margin-top: 0.45rem;
+    color: rgba(255, 248, 239, 0.72);
+    font-size: 0.88rem;
+}
+
+.home-section,
+.courts-page .stats-grid,
+.courts-page .courts-toolbar,
+.map-page .map-layout,
+.reservations-page .reservation-board,
+.reservations-page .section-block:last-of-type {
+    position: relative;
+}
+
+.home-section::before,
+.courts-page .courts-toolbar::before,
+.map-page .map-layout::before,
+.reservations-page .reservation-board::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.feature-card,
+.process-card,
+.stat-card,
+.quick-fact,
+.court-info-item,
+.detail-card,
+.reservation-stage-card,
+.booking-form-card,
+.schedule-summary-card,
+.schedule-calendar-card,
+.schedule-slots-card {
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(240, 234, 224, 0.9)),
+        rgba(255, 255, 255, 0.92);
+}
+
+.feature-card h3,
+.process-card h3,
+.court-name,
+.reservation-card-header h3,
+.selected-court-panel h3,
+.legend-card h3,
+.map-header h2,
+.booking-panel-header h3,
+.schedule-summary-header h3 {
+    font-size: clamp(1.14rem, 1.8vw, 1.34rem);
+    letter-spacing: -0.04em;
+}
+
+.courts-toolbar {
+    padding: 1.2rem 1.25rem;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(240, 234, 224, 0.88)),
+        rgba(255, 255, 255, 0.84);
+}
+
+.search-box,
+.toolbar-controls select,
+.form-group input,
+.form-group select {
+    border-color: rgba(19, 25, 35, 0.08);
+}
+
+.results-count {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.court-card {
+    border-radius: 34px;
+    background:
+        linear-gradient(180deg, rgba(11, 82, 69, 0.08), rgba(255, 255, 255, 0.96) 36%),
+        linear-gradient(155deg, rgba(255, 255, 255, 0.98), rgba(240, 234, 224, 0.9));
+}
+
+.court-header {
+    gap: 1rem;
+    padding: 1.5rem 1.5rem 1.1rem;
+    border-bottom: none;
+}
+
+.court-status-pill {
+    background: rgba(17, 74, 63, 0.08);
+}
+
+.badge-available {
+    background: linear-gradient(135deg, rgba(31, 122, 90, 0.18), rgba(255, 255, 255, 0.85));
+}
+
+.badge-busy {
+    background: linear-gradient(135deg, rgba(185, 78, 89, 0.16), rgba(255, 255, 255, 0.86));
+}
+
+.court-inline-meta {
+    background: rgba(19, 25, 35, 0.05);
+}
+
+.court-name {
+    max-width: 15ch;
+    font-size: clamp(1.5rem, 2vw, 1.9rem);
+}
+
+.court-body {
+    gap: 1.15rem;
+}
+
+.court-stats .stat {
+    border-radius: 22px;
+}
+
+.stat-value {
+    font-size: 1.62rem;
+}
+
+.schedule-note {
+    background:
+        linear-gradient(135deg, rgba(22, 83, 159, 0.1), rgba(255, 255, 255, 0.96)),
+        rgba(255, 255, 255, 0.92);
+}
+
+.map-panel,
+.legend-card,
+.selected-court-panel,
+.reservation-board,
+.reservation-stage-card,
+.tabs-row,
+.modal,
+.booking-intro-card {
+    border-radius: 34px;
+}
+
+.map-header,
+.reservation-card-header,
+.modal-header,
+.modal-footer {
+    padding-inline: 1.5rem;
+}
+
+.map-wrapper {
+    height: 620px;
+}
+
+.leaflet-container {
+    background: #dce8e3 !important;
+}
+
+.selected-court-panel,
+.legend-card {
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(239, 233, 223, 0.9)),
+        rgba(255, 255, 255, 0.9);
+}
+
+.tabs-row {
+    padding: 0.55rem;
+}
+
+.tab-button {
+    min-width: 180px;
+}
+
+.reservation-card {
+    border-radius: 32px;
+}
+
+.reservation-stage-header h2 {
+    font-size: 1.45rem;
+}
+
+.reservation-stage-count {
+    border-radius: 28px;
+}
+
+.waitlist-position-chip {
+    min-width: 88px;
+    height: 88px;
+    border-radius: 28px;
+}
+
+.modal {
+    border-radius: 36px;
+}
+
+.modal-booking {
+    max-width: 1200px;
+}
+
+.booking-intro-card,
+.booking-form-card,
+.schedule-summary-card {
+    border-radius: 30px;
+}
+
+.schedule-shell,
+.booking-composer-grid {
+    gap: 1.1rem;
+}
+
+.calendar-day,
+.time-slot,
+.schedule-preset {
+    border-radius: 20px;
+}
+
+.time-slot.available {
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(237, 247, 242, 0.9)),
+        rgba(255, 255, 255, 0.94);
+}
+
+.time-slot.available small {
+    color: var(--success);
+}
+
+.price-summary {
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(245, 236, 224, 0.92)),
+        rgba(255, 255, 255, 0.94);
+}
+
+.empty-state {
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(241, 235, 225, 0.82)),
+        rgba(255, 255, 255, 0.68);
+}
+
+@media (max-width: 1180px) {
+    .navbar-container,
+    .app-footer {
+        max-width: 100%;
+    }
+
+    .hero-grid,
+    .booking-composer-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-title {
+        max-width: none;
+    }
+
+    .hero-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .app-footer {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 860px) {
+    .navbar-container {
+        justify-content: center;
+    }
+
+    .navbar-utility {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .navbar-mini-card {
+        min-width: 0;
+    }
+
+    .hero {
+        padding: 1.5rem;
+    }
+
+    .section-intro,
+    .section-block,
+    .reservation-stage-card,
+    .court-card,
+    .map-panel,
+    .legend-card,
+    .selected-court-panel {
+        border-radius: 28px;
+    }
+
+    .hero-title,
+    .section-intro h1 {
+        font-size: 2.25rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .global-watermark {
+        opacity: 0.05;
+    }
+
+    .main-content {
+        padding-top: 1.5rem;
+    }
+
+    .navbar-utility,
+    .footer-links,
+    .footer-meta {
+        width: 100%;
+    }
+
+    .footer-links a,
+    .footer-meta span {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .court-name {
+        max-width: none;
+    }
+
+    .tab-button {
+        min-width: 0;
+    }
+}
+
+.planner-overview {
+    margin-bottom: 1rem;
+    padding: 1.2rem 1.25rem;
+    border-radius: 30px;
+    background:
+        linear-gradient(145deg, rgba(11, 82, 69, 0.12), rgba(255, 255, 255, 0.94)),
+        linear-gradient(155deg, rgba(255, 255, 255, 0.98), rgba(241, 235, 225, 0.92));
+    border: 1px solid rgba(19, 25, 35, 0.08);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68);
+}
+
+.planner-overview-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.planner-overview-top h3 {
+    margin-top: 0.18rem;
+    font-size: 1.28rem;
+    letter-spacing: -0.04em;
+}
+
+.planner-overview-top p {
+    margin-top: 0.48rem;
+    max-width: 62ch;
+    color: var(--muted);
+    font-size: 0.92rem;
+}
+
+.planner-overview-grid {
+    margin-top: 1rem;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.8rem;
+}
+
+.planner-metric-card,
+.slot-insight-card {
+    min-height: 96px;
+    padding: 1rem 1.05rem;
+    border-radius: 24px;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(241, 236, 228, 0.9)),
+        rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(19, 25, 35, 0.07);
+}
+
+.planner-metric-card span,
+.slot-insight-card span,
+.schedule-context-note {
+    display: block;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.planner-metric-card strong,
+.slot-insight-card strong {
+    display: block;
+    margin-top: 0.45rem;
+    font-size: 1.08rem;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+}
+
+.planner-status-card.available {
+    background:
+        linear-gradient(145deg, rgba(31, 122, 90, 0.14), rgba(255, 255, 255, 0.94)),
+        rgba(255, 255, 255, 0.92);
+}
+
+.planner-status-card.booked {
+    background:
+        linear-gradient(145deg, rgba(185, 78, 89, 0.14), rgba(255, 255, 255, 0.94)),
+        rgba(255, 255, 255, 0.92);
+}
+
+.planner-status-card.past,
+.planner-status-card.out-of-range,
+.planner-status-card.loading {
+    background:
+        linear-gradient(145deg, rgba(19, 25, 35, 0.08), rgba(255, 255, 255, 0.94)),
+        rgba(255, 255, 255, 0.92);
+}
+
+.schedule-context-note {
+    margin-top: 1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid rgba(19, 25, 35, 0.07);
+}
+
+.slot-insight-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.slot-insight-card {
+    min-height: 0;
+}
+
+.time-slot-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.7rem;
+}
+
+.slot-state {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 26px;
+    padding: 0.25rem 0.48rem;
+    border-radius: 999px;
+    font-style: normal;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.slot-state.available {
+    background: rgba(31, 122, 90, 0.12);
+    color: var(--success);
+}
+
+.slot-state.booked {
+    background: rgba(185, 78, 89, 0.12);
+    color: var(--danger);
+}
+
+.slot-state.past,
+.slot-state.out-of-range {
+    background: rgba(19, 25, 35, 0.1);
+    color: rgba(255, 248, 239, 0.8);
+}
+
+.time-slot {
+    gap: 0.65rem;
+}
+
+.time-slot small {
+    line-height: 1.45;
+}
+
+.schedule-presets,
+.slot-insight-row,
+.planner-overview-grid {
+    animation: softRise 420ms ease both;
+}
+
+.courts-page .court-card,
+.home-page .feature-card,
+.home-page .process-card,
+.reservations-page .reservation-card,
+.reservations-page .reservation-stage-card,
+.map-page .legend-card,
+.map-page .selected-court-panel {
+    animation: softRise 520ms ease both;
+}
+
+.courts-page .court-card:nth-child(2),
+.home-page .feature-card:nth-child(2),
+.home-page .process-card:nth-child(2),
+.reservations-page .reservation-card:nth-child(2) {
+    animation-delay: 60ms;
+}
+
+.courts-page .court-card:nth-child(3),
+.home-page .feature-card:nth-child(3),
+.home-page .process-card:nth-child(3),
+.reservations-page .reservation-card:nth-child(3) {
+    animation-delay: 120ms;
+}
+
+.courts-page .court-card:nth-child(4),
+.home-page .feature-card:nth-child(4),
+.reservations-page .reservation-card:nth-child(4) {
+    animation-delay: 180ms;
+}
+
+.court-card,
+.feature-card,
+.process-card,
+.reservation-card,
+.time-slot,
+.calendar-day,
+.schedule-preset,
+.planner-metric-card,
+.slot-insight-card {
+    will-change: transform;
+}
+
+.time-slot:hover,
+.calendar-day:hover,
+.schedule-preset:hover,
+.planner-metric-card:hover,
+.slot-insight-card:hover {
+    transform: translateY(-2px);
+}
+
+.court-topline-main {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+}
+
+.favorite-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 42px;
+    padding: 0.58rem 0.88rem;
+    border-radius: 999px;
+    border: 1px solid rgba(19, 25, 35, 0.08);
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(241, 235, 225, 0.9)),
+        rgba(255, 255, 255, 0.92);
+    color: var(--ink-soft);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform var(--transition), border-color var(--transition), background var(--transition), color var(--transition), box-shadow var(--transition);
+}
+
+.favorite-toggle svg {
+    width: 15px;
+    height: 15px;
+}
+
+.favorite-toggle:hover {
+    transform: translateY(-1px);
+    border-color: rgba(15, 93, 78, 0.18);
+    color: var(--primary);
+}
+
+.favorite-toggle.active {
+    background:
+        linear-gradient(145deg, rgba(197, 144, 58, 0.16), rgba(255, 255, 255, 0.92)),
+        rgba(255, 255, 255, 0.9);
+    border-color: rgba(197, 144, 58, 0.22);
+    color: #7f571b;
+    box-shadow: 0 12px 24px rgba(197, 144, 58, 0.12);
+}
+
+.favorite-toggle.compact {
+    min-height: 38px;
+    padding: 0.52rem 0.78rem;
+}
+
+.badge-favorite {
+    background: linear-gradient(135deg, rgba(197, 144, 58, 0.18), rgba(255, 255, 255, 0.9));
+    color: #85581d;
+}
+
+.saved-profile-banner {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.8rem;
+    align-items: start;
+    margin-bottom: 1rem;
+    padding: 0.95rem 1rem;
+    border-radius: 24px;
+    background:
+        linear-gradient(145deg, rgba(11, 82, 69, 0.12), rgba(255, 255, 255, 0.95)),
+        rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(19, 25, 35, 0.08);
+}
+
+.saved-profile-banner svg {
+    width: 18px;
+    height: 18px;
+    color: var(--primary);
+    margin-top: 0.08rem;
+}
+
+.saved-profile-banner span {
+    display: block;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.saved-profile-banner strong {
+    display: block;
+    margin-top: 0.28rem;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+}
+
+.selected-court-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.8rem;
+}
+
+.selected-court-heading h3 {
+    margin: 0;
+}
+
+.map-page .intro-metrics,
+.reservations-page .intro-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    min-width: min(100%, 600px);
+}
+
+.intro-refresh-btn {
+    width: 100%;
+    justify-content: center;
+}
+
+.reservation-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) auto;
+    gap: 0.85rem;
+    align-items: center;
+    padding: 1rem 1.1rem;
+    border-radius: 30px;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(241, 235, 225, 0.9)),
+        rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(19, 25, 35, 0.08);
+    box-shadow: var(--shadow-sm);
+}
+
+.reservation-filter-pills {
+    justify-content: flex-start;
+}
+
+.reservation-toolbar .results-count {
+    padding-left: 0;
+}
+
+@keyframes softRise {
+    from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.985);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 1180px) {
+    .planner-overview-top,
+    .planner-overview-grid {
+        grid-template-columns: 1fr;
+        display: grid;
+    }
+
+    .planner-overview-top {
+        align-items: stretch;
+    }
+
+    .reservation-toolbar {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 860px) {
+    .slot-insight-row {
+        grid-template-columns: 1fr;
+    }
+
+    .map-page .intro-metrics,
+    .reservations-page .intro-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .selected-court-heading {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 640px) {
+    .planner-overview {
+        padding: 1rem;
+        border-radius: 24px;
+    }
+
+    .planner-overview-top h3 {
+        font-size: 1.1rem;
+    }
+
+    .planner-overview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .time-slot-head {
+        align-items: center;
+    }
+
+    .saved-profile-banner {
+        grid-template-columns: 1fr;
+    }
+
+    .map-page .intro-metrics,
+    .reservations-page .intro-metrics {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .courts-page .court-card,
+    .home-page .feature-card,
+    .home-page .process-card,
+    .reservations-page .reservation-card,
+    .reservations-page .reservation-stage-card,
+    .map-page .legend-card,
+    .map-page .selected-court-panel,
+    .schedule-presets,
+    .slot-insight-row,
+    .planner-overview-grid,
+    .global-watermark-track {
+        animation: none !important;
     }
 }

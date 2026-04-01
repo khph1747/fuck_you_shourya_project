@@ -83,9 +83,11 @@ function Navbar() {
                     ))}
                 </div>
 
-                <div className="navbar-status">
-                    <span className="status-dot"></span>
-                    Live OSM data
+                <div className="navbar-utility">
+                    <div className="navbar-mini-card">
+                        <span>Mode</span>
+                        <strong>Public Access</strong>
+                    </div>
                 </div>
             </div>
         </nav>
@@ -116,9 +118,21 @@ function App() {
                         </Routes>
                     </main>
                     <footer className="app-footer">
-                        <span>TennisBook</span>
-                        <span>Milpitas public courts</span>
-                        <span>Reservations, waitlist, live availability</span>
+                        <div className="footer-brand">
+                            <strong>TennisBook</strong>
+                            <p>Refactored public-court booking for faster discovery, cleaner scheduling, and sharper operational visibility.</p>
+                        </div>
+                        <div className="footer-links">
+                            {navigation.map((item) => (
+                                <Link key={item.to} to={item.to}>
+                                    {item.label}
+                                </Link>
+                            ))}
+                        </div>
+                        <div className="footer-meta">
+                            <span>Milpitas public courts</span>
+                            <span>Reservations, waitlist, live availability</span>
+                        </div>
                     </footer>
                 </div>
                 <Toaster

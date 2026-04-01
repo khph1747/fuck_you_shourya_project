@@ -44,6 +44,34 @@ const CloseIcon = () => (
     </svg>
 );
 
+const SearchIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="11" cy="11" r="8" />
+        <path d="M21 21l-4.35-4.35" />
+    </svg>
+);
+
+const RefreshIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M23 4v6h-6" />
+        <path d="M1 20v-6h6" />
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+    </svg>
+);
+
+const CopyIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+);
+
+const DirectionsIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M21 3l-9 18-2-8-8-2 18-8z" />
+    </svg>
+);
+
 function toValidDate(value) {
     const parsedDate = new Date(value);
     return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
@@ -145,12 +173,130 @@ function getTimerLabel(phase) {
     return 'Time Remaining';
 }
 
+function getDirectionsUrl(entry) {
+    if (!entry?.court_latitude || !entry?.court_longitude) {
+        return '';
+    }
+
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${entry.court_latitude},${entry.court_longitude}`)}`;
+}
+
+function escapeIcsText(value) {
+    return `${value || ''}`
+        .replace(/\\/g, '\\\\')
+        .replace(/\n/g, '\\n')
+        .replace(/,/g, '\\,')
+        .replace(/;/g, '\\;');
+}
+
+function formatIcsDate(value) {
+    const parsedDate = toValidDate(value);
+
+    if (!parsedDate) {
+        return '';
+    }
+
+    const pad = (segment) => String(segment).padStart(2, '0');
+
+    return `${parsedDate.getUTCFullYear()}${pad(parsedDate.getUTCMonth() + 1)}${pad(parsedDate.getUTCDate())}T${pad(parsedDate.getUTCHours())}${pad(parsedDate.getUTCMinutes())}${pad(parsedDate.getUTCSeconds())}Z`;
+}
+
+function slugifyFilePart(value) {
+    const normalizedValue = `${value || ''}`
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+    return normalizedValue || 'reservation';
+}
+
+function buildReservationSummary(reservation) {
+    return [
+        `Court: ${reservation.court_name}`,
+        `Address: ${reservation.court_address}`,
+        `Player: ${reservation.player_name}`,
+        `Players: ${reservation.number_of_players}`,
+        `Duration: ${reservation.duration_hours}h`,
+        `Start: ${formatDateTime(reservation.start_time)}`,
+        `End: ${formatDateTime(reservation.end_time)}`
+    ].join('\n');
+}
+
+function buildWaitlistSummary(entry) {
+    return [
+        `Court: ${entry.court_name}`,
+        `Address: ${entry.court_address}`,
+        `Player: ${entry.player_name}`,
+        `Players: ${entry.number_of_players}`,
+        `Duration: ${entry.duration_hours}h`,
+        `Preferred Date: ${entry.preferred_date || 'Flexible'}`,
+        `Preferred Time: ${entry.preferred_time || 'Flexible'}`,
+        `Joined: ${formatDateTime(entry.created_at)}`
+    ].join('\n');
+}
+
+function downloadReservationCalendar(reservation) {
+    const startStamp = formatIcsDate(reservation.start_time);
+    const endStamp = formatIcsDate(reservation.end_time);
+
+    if (!startStamp || !endStamp) {
+        throw new Error('Reservation dates are invalid');
+    }
+
+    const calendarLines = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//TennisBook//Reservation Export//EN',
+        'CALSCALE:GREGORIAN',
+        'BEGIN:VEVENT',
+        `UID:reservation-${reservation.id || 'export'}-${startStamp}@tennisbook`,
+        `DTSTAMP:${formatIcsDate(new Date().toISOString())}`,
+        `DTSTART:${startStamp}`,
+        `DTEND:${endStamp}`,
+        `SUMMARY:${escapeIcsText(`${reservation.court_name} Tennis Reservation`)}`,
+        `DESCRIPTION:${escapeIcsText(buildReservationSummary(reservation))}`,
+        `LOCATION:${escapeIcsText(reservation.court_address)}`,
+        'END:VEVENT',
+        'END:VCALENDAR'
+    ];
+
+    const blob = new Blob([calendarLines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = `${slugifyFilePart(reservation.court_name)}-${slugifyFilePart(reservation.start_time)}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+}
+
+async function copyText(text) {
+    if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return;
+    }
+
+    const helper = document.createElement('textarea');
+    helper.value = text;
+    helper.setAttribute('readonly', '');
+    helper.style.position = 'absolute';
+    helper.style.left = '-9999px';
+    document.body.appendChild(helper);
+    helper.select();
+    document.execCommand('copy');
+    document.body.removeChild(helper);
+}
+
 function MyReservations() {
     const [activeTab, setActiveTab] = useState('reservations');
     const [reservations, setReservations] = useState([]);
     const [waitlist, setWaitlist] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [nowMs, setNowMs] = useState(Date.now());
+    const [reservationQuery, setReservationQuery] = useState('');
+    const [reservationFilter, setReservationFilter] = useState('all');
     const [showQRModal, setShowQRModal] = useState(false);
     const [selectedQR, setSelectedQR] = useState('');
     const [showCancelModal, setShowCancelModal] = useState(false);
@@ -158,49 +304,60 @@ function MyReservations() {
     const [cancelPasscode, setCancelPasscode] = useState('');
     const [cancelling, setCancelling] = useState(false);
 
+    const loadReservationDesk = async (showLoader = false) => {
+        if (showLoader) {
+            setLoading(true);
+        } else {
+            setRefreshing(true);
+        }
+
+        try {
+            const courtsResponse = await axios.get('/api/courts');
+            const courts = courtsResponse.data;
+
+            const courtData = await Promise.all(
+                courts.map(async (court) => {
+                    try {
+                        const [reservationsResponse, waitlistResponse] = await Promise.all([
+                            axios.get(`/api/courts/${court.id}/reservations`),
+                            axios.get(`/api/courts/${court.id}/waitlist`)
+                        ]);
+
+                        return {
+                            reservations: reservationsResponse.data.map((reservation) => ({
+                                ...reservation,
+                                court_name: court.name,
+                                court_address: court.address,
+                                court_latitude: court.latitude,
+                                court_longitude: court.longitude
+                            })),
+                            waitlist: waitlistResponse.data.map((entry) => ({
+                                ...entry,
+                                court_name: court.name,
+                                court_address: court.address,
+                                court_latitude: court.latitude,
+                                court_longitude: court.longitude
+                            }))
+                        };
+                    } catch (error) {
+                        console.error(`Error fetching reservation data for ${court.id}:`, error);
+                        return { reservations: [], waitlist: [] };
+                    }
+                })
+            );
+
+            setReservations(courtData.flatMap((court) => court.reservations));
+            setWaitlist(courtData.flatMap((court) => court.waitlist));
+        } catch (error) {
+            toast.error(getApiErrorMessage(error, 'Failed to load reservations'));
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const courtsResponse = await axios.get('/api/courts');
-                const courts = courtsResponse.data;
-
-                const courtData = await Promise.all(
-                    courts.map(async (court) => {
-                        try {
-                            const [reservationsResponse, waitlistResponse] = await Promise.all([
-                                axios.get(`/api/courts/${court.id}/reservations`),
-                                axios.get(`/api/courts/${court.id}/waitlist`)
-                            ]);
-
-                            return {
-                                reservations: reservationsResponse.data.map((reservation) => ({
-                                    ...reservation,
-                                    court_name: court.name,
-                                    court_address: court.address
-                                })),
-                                waitlist: waitlistResponse.data.map((entry) => ({
-                                    ...entry,
-                                    court_name: court.name,
-                                    court_address: court.address
-                                }))
-                            };
-                        } catch (error) {
-                            console.error(`Error fetching reservation data for ${court.id}:`, error);
-                            return { reservations: [], waitlist: [] };
-                        }
-                    })
-                );
-
-                setReservations(courtData.flatMap((court) => court.reservations));
-                setWaitlist(courtData.flatMap((court) => court.waitlist));
-            } catch (error) {
-                toast.error(getApiErrorMessage(error, 'Failed to load reservations'));
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
+        loadReservationDesk(true);
     }, []);
 
     useEffect(() => {
@@ -258,7 +415,50 @@ function MyReservations() {
         }
     };
 
-    const reservationView = reservations
+    const handleCopyReservation = async (reservation) => {
+        try {
+            await copyText(buildReservationSummary(reservation));
+            toast.success('Reservation details copied');
+        } catch (error) {
+            toast.error('Failed to copy reservation details');
+        }
+    };
+
+    const handleCopyWaitlist = async (entry) => {
+        try {
+            await copyText(buildWaitlistSummary(entry));
+            toast.success('Waitlist details copied');
+        } catch (error) {
+            toast.error('Failed to copy waitlist details');
+        }
+    };
+
+    const handleDownloadCalendar = (reservation) => {
+        try {
+            downloadReservationCalendar(reservation);
+            toast.success('Calendar file downloaded');
+        } catch (error) {
+            toast.error('Could not export this reservation');
+        }
+    };
+
+    const normalizedReservationQuery = reservationQuery.trim().toLowerCase();
+    const matchesSearch = (entry) => {
+        if (!normalizedReservationQuery) {
+            return true;
+        }
+
+        return [
+            entry.court_name,
+            entry.court_address,
+            entry.player_name,
+            entry.player_email
+        ]
+            .filter(Boolean)
+            .some((value) => `${value}`.toLowerCase().includes(normalizedReservationQuery));
+    };
+
+    const reservationInventory = reservations
         .map((reservation) => {
             const timer = getReservationTimer(reservation, nowMs);
             return {
@@ -269,6 +469,26 @@ function MyReservations() {
         })
         .sort((left, right) => new Date(left.start_time) - new Date(right.start_time));
 
+    const reservationView = reservationInventory.filter((reservation) => {
+        if (!matchesSearch(reservation)) {
+            return false;
+        }
+
+        if (reservationFilter === 'live') {
+            return reservation.phase === 'active' || reservation.phase === 'ending';
+        }
+
+        if (reservationFilter === 'ending') {
+            return reservation.phase === 'ending';
+        }
+
+        if (reservationFilter === 'scheduled') {
+            return reservation.phase === 'scheduled';
+        }
+
+        return true;
+    });
+
     const liveReservations = reservationView
         .filter((reservation) => reservation.phase === 'active' || reservation.phase === 'ending')
         .sort((left, right) => new Date(left.end_time) - new Date(right.end_time));
@@ -277,7 +497,8 @@ function MyReservations() {
         .filter((reservation) => reservation.phase === 'scheduled')
         .sort((left, right) => new Date(left.start_time) - new Date(right.start_time));
 
-    const endingSoonCount = liveReservations.filter((reservation) => reservation.phase === 'ending').length;
+    const filteredWaitlist = waitlist.filter(matchesSearch);
+    const endingSoonCount = reservationInventory.filter((reservation) => reservation.phase === 'ending').length;
 
     const renderReservationCard = (reservation) => (
         <article key={reservation.id} className={`reservation-card reservation-card-${reservation.phase}`}>
@@ -349,6 +570,36 @@ function MyReservations() {
                     )}
 
                     <button
+                        type="button"
+                        className="btn btn-secondary btn-full"
+                        onClick={() => handleDownloadCalendar(reservation)}
+                    >
+                        <CalendarIcon />
+                        Add to Calendar
+                    </button>
+
+                    <button
+                        type="button"
+                        className="btn btn-secondary btn-full"
+                        onClick={() => handleCopyReservation(reservation)}
+                    >
+                        <CopyIcon />
+                        Copy Details
+                    </button>
+
+                    {getDirectionsUrl(reservation) && (
+                        <a
+                            href={getDirectionsUrl(reservation)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn btn-secondary btn-full"
+                        >
+                            <DirectionsIcon />
+                            Directions
+                        </a>
+                    )}
+
+                    <button
                         className="btn btn-outline btn-full"
                         onClick={() => openCancelModal(reservation)}
                         disabled={!reservation.has_passcode}
@@ -371,7 +622,7 @@ function MyReservations() {
     }
 
     return (
-        <div className="page-stack fade-in">
+        <div className="page-stack fade-in reservations-page">
             <section className="section-intro">
                 <div>
                     <span className="section-kicker">Reservation Desk</span>
@@ -384,16 +635,25 @@ function MyReservations() {
                 <div className="intro-metrics">
                     <div className="intro-metric">
                         <span>Live Now</span>
-                        <strong>{liveReservations.length}</strong>
+                        <strong>{reservationInventory.filter((reservation) => reservation.phase === 'active' || reservation.phase === 'ending').length}</strong>
                     </div>
                     <div className="intro-metric">
                         <span>Scheduled</span>
-                        <strong>{scheduledReservations.length}</strong>
+                        <strong>{reservationInventory.filter((reservation) => reservation.phase === 'scheduled').length}</strong>
                     </div>
                     <div className="intro-metric">
                         <span>Waitlist</span>
                         <strong>{waitlist.length}</strong>
                     </div>
+                    <button
+                        type="button"
+                        className={`btn btn-secondary btn-sm intro-refresh-btn ${refreshing ? 'loading' : ''}`}
+                        onClick={() => loadReservationDesk()}
+                        disabled={refreshing}
+                    >
+                        <RefreshIcon />
+                        {refreshing ? 'Refreshing...' : 'Refresh'}
+                    </button>
                 </div>
             </section>
 
@@ -416,13 +676,62 @@ function MyReservations() {
                 </button>
             </div>
 
+            <div className="reservation-toolbar">
+                <div className="search-box">
+                    <SearchIcon />
+                    <input
+                        type="text"
+                        placeholder={activeTab === 'reservations' ? 'Search court, address, player...' : 'Search waitlist by court or player...'}
+                        value={reservationQuery}
+                        onChange={(e) => setReservationQuery(e.target.value)}
+                    />
+                </div>
+
+                {activeTab === 'reservations' ? (
+                    <div className="filter-pills reservation-filter-pills">
+                        <button
+                            className={`filter-pill ${reservationFilter === 'all' ? 'active' : ''}`}
+                            onClick={() => setReservationFilter('all')}
+                        >
+                            All
+                        </button>
+                        <button
+                            className={`filter-pill ${reservationFilter === 'live' ? 'active' : ''}`}
+                            onClick={() => setReservationFilter('live')}
+                        >
+                            Live
+                        </button>
+                        <button
+                            className={`filter-pill ${reservationFilter === 'ending' ? 'active' : ''}`}
+                            onClick={() => setReservationFilter('ending')}
+                        >
+                            Ending Soon
+                        </button>
+                        <button
+                            className={`filter-pill ${reservationFilter === 'scheduled' ? 'active' : ''}`}
+                            onClick={() => setReservationFilter('scheduled')}
+                        >
+                            Scheduled
+                        </button>
+                    </div>
+                ) : (
+                    <div className="results-count">
+                        Showing {filteredWaitlist.length} of {waitlist.length} waitlist entries.
+                    </div>
+                )}
+            </div>
+
             {activeTab === 'reservations' && (
                 <section className="section-block reservation-board">
                     {reservationView.length === 0 ? (
                         <div className="empty-state">
                             <TennisIcon />
-                            <h3>No Reservations Yet</h3>
-                            <p>Your scheduled and live court sessions will appear here once you create them.</p>
+                            <h3>No Matching Reservations</h3>
+                            <p>
+                                {reservationInventory.length === 0
+                                    ? 'Your scheduled and live court sessions will appear here once you create them.'
+                                    : 'Adjust the search or filter to see more reservations.'}
+                            </p>
                         </div>
                     ) : (
                         <div className="reservation-stage-grid">
@@ -487,15 +796,19 @@ function MyReservations() {
 
             {activeTab === 'waitlist' && (
                 <section className="section-block">
-                    {waitlist.length === 0 ? (
+                    {filteredWaitlist.length === 0 ? (
                         <div className="empty-state">
                             <ListIcon />
-                            <h3>No Waitlist Entries</h3>
-                            <p>You are not currently queued for any courts. Join a waitlist from the Courts page when a venue is busy.</p>
+                            <h3>No Matching Waitlist Entries</h3>
+                            <p>
+                                {waitlist.length === 0
+                                    ? 'You are not currently queued for any courts. Join a waitlist from the Courts page when a venue is busy.'
+                                    : 'Adjust the search term to see more waitlist entries.'}
+                            </p>
                         </div>
                     ) : (
                         <div className="reservation-grid">
-                            {waitlist.map((entry) => (
+                            {filteredWaitlist.map((entry) => (
                                 <article key={entry.id} className="reservation-card waitlist-card">
                                     <div className="reservation-card-header neutral">
                                         <div>
@@ -537,13 +850,34 @@ function MyReservations() {
                                             </div>
                                         </div>
 
-                                        <button
-                                            className="btn btn-outline btn-full"
-                                            onClick={() => removeFromWaitlist(entry.id)}
-                                        >
-                                            <CloseIcon />
-                                            Leave Waitlist
-                                        </button>
+                                        <div className="stack-actions reservation-actions-grid">
+                                            {getDirectionsUrl(entry) && (
+                                                <a
+                                                    href={getDirectionsUrl(entry)}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="btn btn-secondary btn-full"
+                                                >
+                                                    <DirectionsIcon />
+                                                    Directions
+                                                </a>
+                                            )}
+                                            <button
+                                                type="button"
+                                                className="btn btn-secondary btn-full"
+                                                onClick={() => handleCopyWaitlist(entry)}
+                                            >
+                                                <CopyIcon />
+                                                Copy Details
+                                            </button>
+                                            <button
+                                                className="btn btn-outline btn-full"
+                                                onClick={() => removeFromWaitlist(entry.id)}
+                                            >
+                                                <CloseIcon />
+                                                Leave Waitlist
+                                            </button>
+                                        </div>
                                     </div>
                                 </article>
                             ))}

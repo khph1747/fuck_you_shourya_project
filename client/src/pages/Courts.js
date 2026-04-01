@@ -1,7 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { useSearchParams } from 'react-router-dom';
 import { getApiErrorMessage } from '../lib/api';
+import {
+    DEFAULT_BOOKING_PROFILE,
+    loadBookingProfile,
+    loadFavoriteCourtIds,
+    saveBookingProfile,
+    saveFavoriteCourtIds
+} from '../lib/preferences';
 
 const LocationIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -89,10 +97,31 @@ const CheckIcon = () => (
     </svg>
 );
 
+const StarIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+);
+
 const DEFAULT_FILTERS = {
     availableOnly: false,
     lightsOnly: false,
+    favoritesOnly: false,
     environment: 'all'
+};
+
+const DEFAULT_RESERVATION_FORM = {
+    ...DEFAULT_BOOKING_PROFILE,
+    passcode: '',
+    start_time: '',
+    duration_hours: 1
+};
+
+const DEFAULT_WAITLIST_FORM = {
+    ...DEFAULT_BOOKING_PROFILE,
+    preferred_date: '',
+    preferred_time: '',
+    duration_hours: 1
 };
 
 const MAX_BOOKING_WINDOW_DAYS = 30;
@@ -105,6 +134,31 @@ const TIME_GROUPS = [
     { label: 'Afternoon', start: 12 * 60, end: 16 * 60 + 30 },
     { label: 'Evening', start: 17 * 60, end: 22 * 60 }
 ];
+
+function buildReservationForm(profile = DEFAULT_BOOKING_PROFILE) {
+    return {
+        ...DEFAULT_RESERVATION_FORM,
+        ...profile,
+        number_of_players: Number(profile.number_of_players) || DEFAULT_BOOKING_PROFILE.number_of_players
+    };
+}
+
+function buildWaitlistForm(profile = DEFAULT_BOOKING_PROFILE) {
+    return {
+        ...DEFAULT_WAITLIST_FORM,
+        ...profile,
+        number_of_players: Number(profile.number_of_players) || DEFAULT_BOOKING_PROFILE.number_of_players
+    };
+}
+
+function buildBookingProfile(source) {
+    return {
+        player_name: `${source?.player_name || ''}`.trim(),
+        player_email: `${source?.player_email || ''}`.trim(),
+        player_phone: `${source?.player_phone || ''}`.trim(),
+        number_of_players: Number(source?.number_of_players) || DEFAULT_BOOKING_PROFILE.number_of_players
+    };
+}
 
 function formatSurface(surface) {
     if (!surface) {
@@ -265,6 +319,50 @@ function formatSlotLabel(minutes) {
     });
 }
 
+function formatDurationLabel(durationHours) {
+    if (durationHours === 0.5) {
+        return '30 min';
+    }
+
+    if (Number.isInteger(durationHours)) {
+        return `${durationHours} hr${durationHours === 1 ? '' : 's'}`;
+    }
+
+    return `${durationHours} hrs`;
+}
+
+function getSlotStatusLabel(status) {
+    if (status === 'available') {
+        return 'Open';
+    }
+
+    if (status === 'booked') {
+        return 'Booked';
+    }
+
+    if (status === 'past') {
+        return 'Passed';
+    }
+
+    return 'Blocked';
+}
+
+function getSlotStatusDescription(status) {
+    if (status === 'available') {
+        return 'Ready to reserve';
+    }
+
+    if (status === 'booked') {
+        return 'Already taken';
+    }
+
+    if (status === 'past') {
+        return 'Time already passed';
+    }
+
+    return 'Outside booking window';
+}
+
 function getSlotStatus(dateKey, minutes, durationHours, reservations, now, maxDate) {
     const slotStart = buildSlotDate(dateKey, minutes);
     const slotEnd = new Date(slotStart.getTime() + durationHours * 60 * 60 * 1000);
@@ -367,8 +465,11 @@ function findNextAvailableSelection(durationHours, reservations, now, minDate, m
 }
 
 function Courts() {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [courts, setCourts] = useState([]);
     const [filteredCourts, setFilteredCourts] = useState([]);
+    const [favoriteCourtIds, setFavoriteCourtIds] = useState(() => loadFavoriteCourtIds());
+    const [savedProfile, setSavedProfile] = useState(() => loadBookingProfile());
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -385,29 +486,15 @@ function Courts() {
     const [courtReservations, setCourtReservations] = useState([]);
     const [availabilityLoading, setAvailabilityLoading] = useState(false);
     const [bookingTick, setBookingTick] = useState(Date.now());
-    const [formData, setFormData] = useState({
-        player_name: '',
-        player_email: '',
-        player_phone: '',
-        passcode: '',
-        start_time: '',
-        number_of_players: 2,
-        duration_hours: 1
-    });
-    const [waitlistData, setWaitlistData] = useState({
-        player_name: '',
-        player_email: '',
-        player_phone: '',
-        number_of_players: 2,
-        preferred_date: '',
-        preferred_time: '',
-        duration_hours: 1
-    });
+    const [formData, setFormData] = useState(() => buildReservationForm(loadBookingProfile()));
+    const [waitlistData, setWaitlistData] = useState(() => buildWaitlistForm(loadBookingProfile()));
     const [cooldownInfo, setCooldownInfo] = useState(null);
     const bookingNow = new Date(bookingTick);
     const { minDate: minBookableDate, maxDate: maxBookableDate } = getBookingWindow(bookingNow);
     const minBookableTime = minBookableDate.getTime();
     const maxBookableTime = maxBookableDate.getTime();
+    const favoriteCourtIdSet = new Set(favoriteCourtIds);
+    const hasSavedProfile = Boolean(savedProfile.player_name || savedProfile.player_email || savedProfile.player_phone);
 
     useEffect(() => {
         fetchCourts();
@@ -554,7 +641,42 @@ function Courts() {
     }, [showReservationModal, selectedDateKey, selectedTimeMinutes]);
 
     useEffect(() => {
+        if (!showReservationModal || !selectedCourt) {
+            return;
+        }
+
+        if (!formData.player_email) {
+            setCooldownInfo(null);
+            return;
+        }
+
+        let isActive = true;
+
+        const loadCooldownInfo = async () => {
+            try {
+                const response = await axios.get(`/api/cooldown/${selectedCourt.id}/${formData.player_email}`);
+
+                if (isActive) {
+                    setCooldownInfo(response.data);
+                }
+            } catch (error) {
+                if (isActive) {
+                    console.error('Error checking cooldown:', error);
+                    toast.error(getApiErrorMessage(error, 'Failed to check cooldown'));
+                }
+            }
+        };
+
+        loadCooldownInfo();
+
+        return () => {
+            isActive = false;
+        };
+    }, [showReservationModal, selectedCourt, formData.player_email]);
+
+    useEffect(() => {
         let nextCourts = [...courts];
+        const favoriteSet = new Set(favoriteCourtIds);
         const normalizedSearch = searchTerm.trim().toLowerCase();
 
         if (normalizedSearch) {
@@ -570,6 +692,10 @@ function Courts() {
 
         if (filters.lightsOnly) {
             nextCourts = nextCourts.filter((court) => court.lights === 1);
+        }
+
+        if (filters.favoritesOnly) {
+            nextCourts = nextCourts.filter((court) => favoriteSet.has(court.id));
         }
 
         if (filters.environment === 'indoor') {
@@ -604,11 +730,19 @@ function Courts() {
                 );
             }
 
+            if (sortBy === 'favorites') {
+                return (
+                    Number(favoriteSet.has(right.id)) - Number(favoriteSet.has(left.id)) ||
+                    (left.active_reservations || 0) - (right.active_reservations || 0) ||
+                    left.name.localeCompare(right.name)
+                );
+            }
+
             return left.name.localeCompare(right.name);
         });
 
         setFilteredCourts(nextCourts);
-    }, [courts, searchTerm, filters, sortBy]);
+    }, [courts, searchTerm, filters, sortBy, favoriteCourtIds]);
 
     const fetchCourts = async () => {
         try {
@@ -642,31 +776,26 @@ function Courts() {
         }
     };
 
-    const checkCooldown = async (email) => {
-        if (!email || !selectedCourt) {
-            return;
-        }
+    const persistBookingProfile = (source) => {
+        const nextProfile = buildBookingProfile(source);
+        setSavedProfile(nextProfile);
+        saveBookingProfile(nextProfile);
+    };
 
-        try {
-            const response = await axios.get(`/api/cooldown/${selectedCourt.id}/${email}`);
-            setCooldownInfo(response.data);
-        } catch (error) {
-            console.error('Error checking cooldown:', error);
-            toast.error(getApiErrorMessage(error, 'Failed to check cooldown'));
-        }
+    const toggleFavoriteCourt = (courtId) => {
+        setFavoriteCourtIds((current) => {
+            const nextFavorites = current.includes(courtId)
+                ? current.filter((id) => id !== courtId)
+                : [...current, courtId];
+
+            saveFavoriteCourtIds(nextFavorites);
+            return nextFavorites;
+        });
     };
 
     const handleReserve = (court) => {
         setSelectedCourt(court);
-        setFormData({
-            player_name: '',
-            player_email: '',
-            player_phone: '',
-            passcode: '',
-            start_time: '',
-            number_of_players: 2,
-            duration_hours: 1
-        });
+        setFormData(buildReservationForm(savedProfile));
         setBookingTick(Date.now());
         setCalendarMonth(startOfMonth(new Date()));
         setSelectedDateKey(getDateKey(new Date()));
@@ -679,15 +808,7 @@ function Courts() {
 
     const handleJoinWaitlist = (court) => {
         setSelectedCourt(court);
-        setWaitlistData({
-            player_name: '',
-            player_email: '',
-            player_phone: '',
-            number_of_players: 2,
-            preferred_date: '',
-            preferred_time: '',
-            duration_hours: 1
-        });
+        setWaitlistData(buildWaitlistForm(savedProfile));
         setShowWaitlistModal(true);
     };
 
@@ -717,6 +838,27 @@ function Courts() {
         setSelectedDateKey(presetSelection.dateKey);
         setSelectedTimeMinutes(matchingSlot);
         setCalendarMonth(startOfMonth(parseDateKey(presetSelection.dateKey)));
+    };
+
+    const handleJumpToNextOpen = () => {
+        const nextSelection = findNextAvailableSelection(
+            Number(formData.duration_hours),
+            courtReservations,
+            bookingNow,
+            minBookableDate,
+            maxBookableDate,
+            selectedDateKey || getDateKey(minBookableDate),
+            selectedTimeMinutes
+        );
+
+        if (!nextSelection) {
+            toast.error('No open slots remain in the current booking window.');
+            return;
+        }
+
+        setSelectedDateKey(nextSelection.dateKey);
+        setSelectedTimeMinutes(nextSelection.minutes);
+        setCalendarMonth(startOfMonth(parseDateKey(nextSelection.dateKey)));
     };
 
     const handleCalendarDaySelect = (day) => {
@@ -788,6 +930,7 @@ function Courts() {
                 court_id: selectedCourt.id,
                 ...formData
             });
+            persistBookingProfile(formData);
             setReservationDetails(response.data);
             setShowReservationModal(false);
             setShowQRModal(true);
@@ -809,6 +952,7 @@ function Courts() {
                 court_id: selectedCourt.id,
                 ...waitlistData
             });
+            persistBookingProfile(waitlistData);
             setShowWaitlistModal(false);
             toast.success(`Added to waitlist! Position: #${response.data.position}`);
             fetchCourts();
@@ -817,12 +961,45 @@ function Courts() {
         }
     };
 
+    useEffect(() => {
+        if (loading) {
+            return;
+        }
+
+        const requestedAction = searchParams.get('action');
+        const requestedCourtId = Number(searchParams.get('court'));
+
+        if (requestedAction !== 'reserve' || !Number.isFinite(requestedCourtId)) {
+            return;
+        }
+
+        const targetCourt = courts.find((court) => court.id === requestedCourtId);
+
+        if (targetCourt) {
+            setSelectedCourt(targetCourt);
+            setFormData(buildReservationForm(savedProfile));
+            setBookingTick(Date.now());
+            setCalendarMonth(startOfMonth(new Date()));
+            setSelectedDateKey(getDateKey(new Date()));
+            setSelectedTimeMinutes(null);
+            setCourtReservations([]);
+            setReservationDetails(null);
+            setCooldownInfo(null);
+            setShowReservationModal(true);
+        } else {
+            toast.error('This court is unavailable right now. Choose another one from the list.');
+        }
+
+        setSearchParams({}, { replace: true });
+    }, [loading, courts, searchParams, setSearchParams, savedProfile]);
+
     const resetFilters = () => {
         setSearchTerm('');
         setFilters(DEFAULT_FILTERS);
         setSortBy('name');
     };
 
+    const favoriteCount = courts.filter((court) => favoriteCourtIdSet.has(court.id)).length;
     const totalAvailable = courts.filter((court) => (court.active_reservations || 0) === 0).length;
     const scheduledLaterCount = courts.filter((court) => (court.upcoming_reservations || 0) > 0).length;
     const lightedCourts = courts.filter((court) => court.lights === 1).length;
@@ -831,6 +1008,7 @@ function Courts() {
         Boolean(searchTerm) ||
         filters.availableOnly ||
         filters.lightsOnly ||
+        filters.favoritesOnly ||
         filters.environment !== 'all' ||
         sortBy !== 'name';
     const calendarDays = buildCalendarDays(
@@ -864,6 +1042,19 @@ function Courts() {
         slots: SLOT_MINUTES_LIST.filter((minutes) => minutes >= group.start && minutes <= group.end)
     }));
     const maxCalendarMonth = startOfMonth(maxBookableDate);
+    const selectedSlotStatus = selectedDateKey && selectedTimeMinutes !== null
+        ? getSlotStatus(
+            selectedDateKey,
+            selectedTimeMinutes,
+            Number(formData.duration_hours),
+            courtReservations,
+            bookingNow,
+            maxBookableDate
+        )
+        : 'out-of-range';
+    const selectedSlotLabel = selectedTimeMinutes !== null ? formatSlotLabel(selectedTimeMinutes) : 'Choose a slot';
+    const selectedDateLabel = selectedDateKey ? formatShortDateLabel(selectedDateKey) : 'Choose a date';
+    const blockedSlotsCount = SLOT_MINUTES_LIST.length - selectedDateAvailability.availableSlots - selectedDateAvailability.bookedSlots;
 
     if (loading) {
         return (
@@ -875,7 +1066,7 @@ function Courts() {
     }
 
     return (
-        <div className="page-stack fade-in">
+        <div className="page-stack fade-in courts-page">
             <section className="section-intro">
                 <div>
                     <span className="section-kicker">Court Directory</span>
@@ -911,6 +1102,15 @@ function Courts() {
                     <div className="stat-info">
                         <h3>{courts.length}</h3>
                         <p>Total Courts</p>
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-icon blue">
+                        <StarIcon />
+                    </div>
+                    <div className="stat-info">
+                        <h3>{favoriteCount}</h3>
+                        <p>Saved Courts</p>
                     </div>
                 </div>
                 <div className="stat-card">
@@ -956,6 +1156,12 @@ function Courts() {
                     >
                         Lights
                     </button>
+                    <button
+                        className={`filter-pill ${filters.favoritesOnly ? 'active' : ''}`}
+                        onClick={() => setFilters((current) => ({ ...current, favoritesOnly: !current.favoritesOnly }))}
+                    >
+                        Saved
+                    </button>
                 </div>
 
                 <div className="toolbar-controls">
@@ -973,6 +1179,7 @@ function Courts() {
                         onChange={(e) => setSortBy(e.target.value)}
                     >
                         <option value="name">Sort: Name</option>
+                        <option value="favorites">Sort: Saved First</option>
                         <option value="available">Sort: Availability</option>
                         <option value="waitlist">Sort: Waitlist</option>
                         <option value="surface">Sort: Surface</option>
@@ -999,25 +1206,37 @@ function Courts() {
             ) : (
                 <>
                     <div className="results-count">
-                        Showing {filteredCourts.length} of {courts.length} courts in Milpitas. {busyCourts} busy right now, {scheduledLaterCount} booked later today or beyond.
+                        Showing {filteredCourts.length} of {courts.length} courts in Milpitas. {favoriteCount} saved, {busyCourts} busy right now, {scheduledLaterCount} booked later today or beyond.
                     </div>
                     <div className="court-grid">
                         {filteredCourts.map((court) => {
                             const isAvailable = (court.active_reservations || 0) === 0;
                             const hasUpcomingReservations = (court.upcoming_reservations || 0) > 0;
+                            const isFavorite = favoriteCourtIdSet.has(court.id);
 
                             return (
                                 <div key={court.id} className="court-card">
                                     <div className="court-header">
                                         <div className="court-topline">
-                                            <span className={`court-status-pill ${isAvailable ? 'badge-available' : 'badge-busy'}`}>
-                                                {isAvailable ? 'Available now' : 'Busy now'}
-                                            </span>
-                                            {hasUpcomingReservations && (
-                                                <span className="court-inline-meta">
-                                                    Next booking {formatScheduleDateTime(court.next_reservation_start)}
+                                            <div className="court-topline-main">
+                                                <span className={`court-status-pill ${isAvailable ? 'badge-available' : 'badge-busy'}`}>
+                                                    {isAvailable ? 'Available now' : 'Busy now'}
                                                 </span>
-                                            )}
+                                                {hasUpcomingReservations && (
+                                                    <span className="court-inline-meta">
+                                                        Next booking {formatScheduleDateTime(court.next_reservation_start)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                className={`favorite-toggle ${isFavorite ? 'active' : ''}`}
+                                                onClick={() => toggleFavoriteCourt(court.id)}
+                                                aria-label={isFavorite ? `Remove ${court.name} from saved courts` : `Save ${court.name}`}
+                                            >
+                                                <StarIcon />
+                                                {isFavorite ? 'Saved' : 'Save'}
+                                            </button>
                                         </div>
                                         <div className="court-heading">
                                             <h3 className="court-name">{court.name}</h3>
@@ -1027,6 +1246,12 @@ function Courts() {
                                             </div>
                                         </div>
                                         <div className="court-badge-row">
+                                            {isFavorite && (
+                                                <span className="badge badge-favorite">
+                                                    <StarIcon />
+                                                    Saved
+                                                </span>
+                                            )}
                                             <span className="badge badge-free">Free Public</span>
                                             <span className={`badge ${court.indoor ? 'badge-indoor' : 'badge-outdoor'}`}>
                                                 {court.indoor ? 'Indoor' : 'Outdoor'}
@@ -1138,6 +1363,40 @@ function Courts() {
                                         <span>Cooldown active until {new Date(cooldownInfo.cooldown_end).toLocaleTimeString()}</span>
                                     </div>
                                 )}
+                                <div className="planner-overview">
+                                    <div className="planner-overview-top">
+                                        <div>
+                                            <span className="section-kicker">Booking Planner</span>
+                                            <h3>Build the slot before locking the reservation.</h3>
+                                            <p>Navigate the calendar, scan slot pressure by day, and jump back to the next open option whenever you want the fastest path.</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="btn btn-outline btn-sm"
+                                            onClick={handleJumpToNextOpen}
+                                        >
+                                            Jump to Next Open
+                                        </button>
+                                    </div>
+                                    <div className="planner-overview-grid">
+                                        <div className="planner-metric-card">
+                                            <span>Date</span>
+                                            <strong>{selectedDateLabel}</strong>
+                                        </div>
+                                        <div className="planner-metric-card">
+                                            <span>Start</span>
+                                            <strong>{selectedSlotLabel}</strong>
+                                        </div>
+                                        <div className="planner-metric-card">
+                                            <span>Duration</span>
+                                            <strong>{formatDurationLabel(Number(formData.duration_hours))}</strong>
+                                        </div>
+                                        <div className={`planner-metric-card planner-status-card ${availabilityLoading ? 'loading' : selectedSlotStatus}`}>
+                                            <span>Status</span>
+                                            <strong>{availabilityLoading ? 'Checking...' : getSlotStatusLabel(selectedSlotStatus)}</strong>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div className="schedule-shell">
                                     <div className="schedule-calendar-card">
                                         <div className="schedule-card-header">
@@ -1196,6 +1455,9 @@ function Courts() {
                                             <span><i className="legend-dot booked"></i>Partially booked</span>
                                             <span><i className="legend-dot blocked"></i>Unavailable / passed</span>
                                         </div>
+                                        <div className="schedule-context-note">
+                                            Booking window runs through {formatScheduleDateTime(maxBookableDate)}.
+                                        </div>
                                     </div>
 
                                     <div className="schedule-slots-card">
@@ -1210,6 +1472,21 @@ function Courts() {
                                                     : selectedDateAvailability.availableSlots > 0
                                                         ? `${selectedDateAvailability.availableSlots} slots open`
                                                         : 'No slots open'}
+                                            </div>
+                                        </div>
+
+                                        <div className="slot-insight-row">
+                                            <div className="slot-insight-card">
+                                                <span>Open</span>
+                                                <strong>{availabilityLoading ? '...' : selectedDateAvailability.availableSlots}</strong>
+                                            </div>
+                                            <div className="slot-insight-card">
+                                                <span>Booked</span>
+                                                <strong>{availabilityLoading ? '...' : selectedDateAvailability.bookedSlots}</strong>
+                                            </div>
+                                            <div className="slot-insight-card">
+                                                <span>Blocked</span>
+                                                <strong>{availabilityLoading ? '...' : blockedSlotsCount}</strong>
                                             </div>
                                         </div>
 
@@ -1266,14 +1543,11 @@ function Courts() {
                                                                         className={`time-slot ${slotStatus} ${selectedTimeMinutes === minutes ? 'selected' : ''}`}
                                                                         onClick={() => handleTimeSlotSelect(minutes, slotStatus)}
                                                                     >
-                                                                        <span>{formatSlotLabel(minutes)}</span>
-                                                                        <small>
-                                                                            {slotStatus === 'available'
-                                                                                ? 'Available'
-                                                                                : slotStatus === 'booked'
-                                                                                    ? 'Booked'
-                                                                                    : 'Unavailable'}
-                                                                        </small>
+                                                                        <div className="time-slot-head">
+                                                                            <span>{formatSlotLabel(minutes)}</span>
+                                                                            <i className={`slot-state ${slotStatus}`}>{getSlotStatusLabel(slotStatus)}</i>
+                                                                        </div>
+                                                                        <small>{getSlotStatusDescription(slotStatus)}</small>
                                                                     </button>
                                                                 );
                                                             })}
@@ -1294,6 +1568,20 @@ function Courts() {
                                                 <p>These details generate the QR booking and secure passcode-based cancellation.</p>
                                             </div>
                                         </div>
+
+                                        {hasSavedProfile && (
+                                            <div className="saved-profile-banner">
+                                                <CheckIcon />
+                                                <div>
+                                                    <span>Smart defaults active</span>
+                                                    <strong>
+                                                        {savedProfile.player_name
+                                                            ? `${savedProfile.player_name} is prefilled for faster booking.`
+                                                            : 'Your recent contact details are prefilled for faster booking.'}
+                                                    </strong>
+                                                </div>
+                                            </div>
+                                        )}
 
                                         <div className="form-row">
                                             <div className="form-group">
@@ -1337,10 +1625,7 @@ function Courts() {
                                                 <input
                                                     type="email"
                                                     value={formData.player_email}
-                                                    onChange={(e) => {
-                                                        setFormData({ ...formData, player_email: e.target.value });
-                                                        checkCooldown(e.target.value);
-                                                    }}
+                                                    onChange={(e) => setFormData({ ...formData, player_email: e.target.value })}
                                                     placeholder="your@email.com"
                                                 />
                                             </div>

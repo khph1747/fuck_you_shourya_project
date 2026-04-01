@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getApiErrorMessage } from '../lib/api';
+import { loadFavoriteCourtIds, saveFavoriteCourtIds } from '../lib/preferences';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -53,6 +54,12 @@ const ArrowIcon = () => (
     </svg>
 );
 
+const StarIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+);
+
 function RecenterMap({ center }) {
     const map = useMap();
 
@@ -76,12 +83,18 @@ function formatSurface(surface) {
         .join(' ');
 }
 
+function getDirectionsUrl(court) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${court.latitude},${court.longitude}`)}`;
+}
+
 function Map() {
     const [courts, setCourts] = useState([]);
+    const [favoriteCourtIds, setFavoriteCourtIds] = useState(() => loadFavoriteCourtIds());
     const [loading, setLoading] = useState(true);
     const [userLocation, setUserLocation] = useState(null);
     const [mapCenter, setMapCenter] = useState([37.4323, -121.8996]);
     const [selectedCourt, setSelectedCourt] = useState(null);
+    const favoriteCourtIdSet = new Set(favoriteCourtIds);
 
     useEffect(() => {
         const fetchCourts = async () => {
@@ -117,9 +130,21 @@ function Map() {
         );
     };
 
+    const toggleFavoriteCourt = (courtId) => {
+        setFavoriteCourtIds((current) => {
+            const nextFavorites = current.includes(courtId)
+                ? current.filter((id) => id !== courtId)
+                : [...current, courtId];
+
+            saveFavoriteCourtIds(nextFavorites);
+            return nextFavorites;
+        });
+    };
+
     const availableCourts = courts.filter((court) => court.active_reservations === 0).length;
     const busyCourts = courts.length - availableCourts;
     const lightedCourts = courts.filter((court) => court.lights === 1).length;
+    const favoriteCount = courts.filter((court) => favoriteCourtIdSet.has(court.id)).length;
 
     if (loading) {
         return (
@@ -131,7 +156,7 @@ function Map() {
     }
 
     return (
-        <div className="page-stack fade-in">
+        <div className="page-stack fade-in map-page">
             <section className="section-intro">
                 <div>
                     <span className="section-kicker">Spatial View</span>
@@ -154,6 +179,10 @@ function Map() {
                     <div className="intro-metric">
                         <span>Lights</span>
                         <strong>{lightedCourts}</strong>
+                    </div>
+                    <div className="intro-metric">
+                        <span>Saved</span>
+                        <strong>{favoriteCount}</strong>
                     </div>
                 </div>
             </section>
@@ -207,9 +236,10 @@ function Map() {
                                                 <span>{court.indoor ? 'Indoor' : 'Outdoor'}</span>
                                                 <span>{court.active_reservations} reserved</span>
                                                 <span>{court.waitlist_count} waitlist</span>
+                                                {favoriteCourtIdSet.has(court.id) && <span>saved</span>}
                                             </div>
                                             <a
-                                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${court.latitude},${court.longitude}`)}`}
+                                                href={getDirectionsUrl(court)}
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="map-popup-link"
@@ -247,7 +277,17 @@ function Map() {
                     {selectedCourt ? (
                         <div className="selected-court-panel">
                             <span className="section-kicker">Selected Court</span>
-                            <h3>{selectedCourt.name}</h3>
+                            <div className="selected-court-heading">
+                                <h3>{selectedCourt.name}</h3>
+                                <button
+                                    type="button"
+                                    className={`favorite-toggle compact ${favoriteCourtIdSet.has(selectedCourt.id) ? 'active' : ''}`}
+                                    onClick={() => toggleFavoriteCourt(selectedCourt.id)}
+                                >
+                                    <StarIcon />
+                                    {favoriteCourtIdSet.has(selectedCourt.id) ? 'Saved' : 'Save'}
+                                </button>
+                            </div>
                             <p>{selectedCourt.address}</p>
 
                             <div className="quick-fact-grid">
@@ -270,12 +310,12 @@ function Map() {
                             </div>
 
                             <div className="stack-actions">
-                                <Link to="/courts" className="btn btn-primary btn-full">
+                                <Link to={`/courts?court=${selectedCourt.id}&action=reserve`} className="btn btn-primary btn-full">
                                     <TennisIcon />
                                     Reserve This Court
                                 </Link>
                                 <a
-                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${selectedCourt.latitude},${selectedCourt.longitude}`)}`}
+                                    href={getDirectionsUrl(selectedCourt)}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="btn btn-outline btn-full"
