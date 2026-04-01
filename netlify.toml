@@ -1,0 +1,14 @@
+[build]
+  command = "npm --prefix client install && npm run build"
+  publish = "client/build"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -1,0 +1,10 @@
+.DS_Store
+node_modules/
+client/node_modules/
+client/build/
+tennis_courts.db
+.env
+client/.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
